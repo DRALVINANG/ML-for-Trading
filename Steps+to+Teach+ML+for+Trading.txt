@@ -1,0 +1,42 @@
+Step to Teach ML for Trading
+------------------------------
+
+Step 1: Give Teaser
+- Is there a Correlation between DBS and UOB?
+- to showcase what simple LR can do
+
+- Imploring YFinance
+- purpose to tell student the focus is NOT on FA but on TA
+
+Step 2: Teach TA-Lib
+
+Step 3: Teach Pyfolio
+
+Step 4: Steps for Supervised ML Trading (that PPT slides...)
+
+Step 5: Logistic Regression
+- Understanding Logistic Regression
+- Understanding ML steps using Log. Regression (w/o all indicators)
+
+------------------------------------------------------------
+ACTIVITY 1: Bring in ALL indicators and check does it improve Log. Regression's accuracy?
+-------------------------------------------------------------
+
+Step 6: Multiple Regression
+- Understanding MR
+- Understanding ML steps using MR
+
+Step 7: Decision Tree
+
+Step 8: Random Forest
+
+-------------------------------------------------------------------
+ACTIVITY 2: Change the ML models and see which performs best?
+--------------------------------------------------------------------
+
+Step 9: Feature Importance Selection 
+- Using MR / DTC / RFC
+
+--------------------------------------------------------------------
+ACTIVITY 3: Use the Feature Importance Selection back on the Indicators to check which are the most important
+--------------------------------------------------------------------
