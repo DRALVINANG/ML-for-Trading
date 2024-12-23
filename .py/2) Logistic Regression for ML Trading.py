@@ -159,6 +159,11 @@ df.dropna(inplace=True)
 # Step 9: Using Pyfolio
 #--------------------------------------------------------------------------------------
 
+perf_stats = pf.timeseries.perf_stats(df.strategy_returns)
+
+# Print the performance stats
+print(perf_stats)
+
 # Force display of Pyfolio tearsheet
 import matplotlib.pyplot as plt
 pf.create_simple_tear_sheet(df.strategy_returns)
@@ -167,4 +172,3 @@ plt.show()
 #--------------------------------------------------------------------------------------
 # THE END
 #--------------------------------------------------------------------------------------
-
