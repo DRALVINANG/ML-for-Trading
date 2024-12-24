@@ -1,6 +1,6 @@
-#--------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------
 # Step 1: Install Libraries
-#--------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------
 
 import numpy as np
 import pandas as pd
@@ -13,13 +13,12 @@ from sklearn.preprocessing import StandardScaler
 import talib as ta
 import pyfolio as pf
 import yfinance as yf
-import graphviz
+from graphviz import Source
+from PyPDF2 import PdfMerger, PdfReader
 
-
-
-#--------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------
 # Step 2: Import Dataset and Plot
-#--------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------
 
 ticker = 'D05.SI'
 data = yf.download(ticker, start='2022-01-01')
@@ -34,9 +33,9 @@ plt.xlabel('Date')
 plt.title(f'{ticker} Close Price')
 plt.show()
 
-#--------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------
 # Step 3: Define Features and Target
-#--------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------
 
 def get_target_features(data):
     # Define Features (X)
@@ -54,42 +53,79 @@ def get_target_features(data):
     data = data.dropna()
     return data['Actual_Signal'], data[['VOLATILITY', 'CORR', 'RSI', 'ADX']]
 
-#--------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------
 # Step 4: Train-Test Split
-#--------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------
 
 y, X = get_target_features(data)
 split = int(0.8 * len(X))
 X_train, X_test, y_train, y_test = X[:split], X[split:], y[:split], y[split:]
 
-#--------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------
 # Step 5: Scaling
-#--------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------
 
 sc = StandardScaler()
 X_train = sc.fit_transform(X_train)
 X_test = sc.transform(X_test)
 
-#--------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------
 # Step 6: Define, Train the Model, and Predict
-#--------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------
 
 # Define and Train Random Forest Model
 rfc = RandomForestClassifier(n_estimators=100, criterion="entropy", max_depth=3, max_features=3)
 model = rfc.fit(X_train, y_train)
 
-# Visualize Individual Trees
+# -------------------------------------------------------------------------------------
+# Visualize Random Forest Trees (Consolidated into a Single PDF)
+# -------------------------------------------------------------------------------------
+
+merger = PdfMerger()  # Initialize PdfMerger to combine PDFs
+
+# Iterate over estimators in the Random Forest
 for i, estimator in enumerate(rfc.estimators_):
-    dot_data = tree.export_graphviz(estimator, out_file=None, feature_names=list(X.columns), class_names=["0", "1"], filled=True, rounded=True)
-    graph = graphviz.Source(dot_data)
-    print(graph)
+    # Export each tree as a DOT file
+    dot_data = tree.export_graphviz(
+        estimator,
+        out_file=None,
+        filled=True,
+        feature_names=X.columns,
+        class_names=['No Position', 'Long Position'],
+        rounded=True
+    )
+
+    # Render each tree as a PDF
+    graph = Source(dot_data)
+    graph.format = "pdf"
+    temp_pdf_path = f"tree_{i}.pdf"  # Temporary path
+    graph.render(temp_pdf_path, cleanup=True)  # Render and ensure cleanup of Graphviz temp files
+
+    # Try to add rendered PDF to the merger
+    try:
+        with open(f"{temp_pdf_path}.pdf", "rb") as pdf_file:
+            merger.append(PdfReader(pdf_file))
+    except FileNotFoundError:
+        print(f"Error: {temp_pdf_path}.pdf not found.")
+
+    # Stop if visualizing too many trees becomes impractical (e.g., limit to 10)
+    if i >= 9:  # Edit this number if you want to visualize more or fewer trees
+        break
+
+# Consolidate all PDFs into a single PDF
+output_pdf = "random_forest_trees.pdf"
+merger.write(output_pdf)  # Save combined PDF
+merger.close()
+
+# Open the consolidated PDF
+print(f"Random Forest Trees saved to {output_pdf}")
 
 # Predict
 y_pred = model.predict(X_test)
 
-#--------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------
 # Step 7: Confusion Matrix and Accuracy Metrics
-#--------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------
 
 def get_metrics(y_test, predicted):
     confusion_matrix_data = metrics.confusion_matrix(y_test, predicted)
@@ -108,9 +144,9 @@ def get_metrics(y_test, predicted):
 
 get_metrics(y_test, y_pred)
 
-#--------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------
 # Step 8: Backtesting the Model
-#--------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------
 
 ticker = 'D05.SI'
 df = yf.download(ticker, start='2016-01-01', end='2017-01-01')
@@ -134,9 +170,9 @@ df['predicted_signal_4_tmrw'] = model.predict(df_scaled)
 df['strategy_returns'] = df['predicted_signal_4_tmrw'].shift(1) * df['PCT_CHANGE']
 df.dropna(inplace=True)
 
-#--------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------
 # Step 9: Evaluate with Pyfolio
-#--------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------
 
 perf_stats = pf.timeseries.perf_stats(df.strategy_returns)
 
