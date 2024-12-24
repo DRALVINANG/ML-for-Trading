@@ -1,6 +1,6 @@
-#--------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------
 # Step 1: Pip Install and Import Libraries
-#--------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------
 # Import Libraries
 import numpy as np
 import pandas as pd
@@ -12,11 +12,12 @@ from sklearn.preprocessing import StandardScaler
 import talib as ta
 import pyfolio as pf
 import yfinance as yf
+from graphviz import Source
+from io import BytesIO
 
-#--------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------
 # Step 2: Import Dataset and Plot
-#--------------------------------------------------------------------------------------
-
+# -------------------------------------------------------------------------------------
 ticker = 'D05.SI'
 data = yf.download(ticker, start='2022-01-01')
 data.columns = data.columns.droplevel(level=1)
@@ -29,10 +30,9 @@ plt.xlabel('Date')
 plt.title(f'{ticker} Close Price')
 plt.show()
 
-#--------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------
 # Step 3: Define Features and Target
-#--------------------------------------------------------------------------------------
-
+# -------------------------------------------------------------------------------------
 def get_target_features(data):
     # Define Features (X)
     data['PCT_CHANGE'] = data['Close'].pct_change()
@@ -49,42 +49,46 @@ def get_target_features(data):
     data = data.dropna()
     return data['Actual_Signal'], data[['VOLATILITY', 'CORR', 'RSI', 'ADX']]
 
-#--------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------
 # Step 4: Train-Test Split
-#--------------------------------------------------------------------------------------
-
+# -------------------------------------------------------------------------------------
 y, X = get_target_features(data)
 split = int(0.8 * len(X))
 X_train, X_test, y_train, y_test = X[:split], X[split:], y[:split], y[split:]
 
-#--------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------
 # Step 5: Scaling
-#--------------------------------------------------------------------------------------
-
+# -------------------------------------------------------------------------------------
 sc = StandardScaler()
 X_train = sc.fit_transform(X_train)
 X_test = sc.transform(X_test)
 
-#--------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------
 # Step 6: Define, Train the Model, and Predict
-#--------------------------------------------------------------------------------------
-
-# Define and Train the Model
-model = DecisionTreeClassifier(criterion='gini', max_depth=3, min_samples_leaf=5)
+# -------------------------------------------------------------------------------------
+# Define and Train the Model using Entropy
+model = DecisionTreeClassifier(criterion='entropy', max_depth=3, min_samples_leaf=5)
 model = model.fit(X_train, y_train)
 
-# Visualize the Decision Tree
-dot_data = tree.export_graphviz(model, out_file=None, filled=True, feature_names=X.columns)
-# Uncomment the following line to generate a visual graph
-# graphviz.Source(dot_data)
+# Visualize the Decision Tree without Saving PNG
+dot_data = tree.export_graphviz(model, out_file=None, 
+                                filled=True, 
+                                feature_names=X.columns,
+                                class_names=['No Position', 'Long Position'])
+
+# Display the Decision Tree as a PDF (No PNG Saved)
+graph = Source(dot_data)
+pdf_bytes = BytesIO()  # Create a BytesIO stream for PDF
+graph.format = "pdf"
+graph.render("decision_tree_temp", format="pdf", cleanup=True)  # Render PDF
+graph.view()  # Open the PDF directly
 
 # Predict
 y_pred = model.predict(X_test)
 
-#--------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------
 # Step 7: Confusion Matrix and Accuracy Metrics
-#--------------------------------------------------------------------------------------
-
+# -------------------------------------------------------------------------------------
 def get_metrics(y_test, predicted):
     confusion_matrix_data = metrics.confusion_matrix(y_test, predicted)
     
@@ -102,10 +106,9 @@ def get_metrics(y_test, predicted):
 
 get_metrics(y_test, y_pred)
 
-#--------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------
 # Step 8: Backtesting the Model
-#--------------------------------------------------------------------------------------
-
+# -------------------------------------------------------------------------------------
 ticker = 'D05.SI'
 df = yf.download(ticker, start='2016-01-01', end='2017-01-01')
 df.columns = df.columns.droplevel(level=1)
@@ -128,10 +131,9 @@ df['predicted_signal_4_tmrw'] = model.predict(df_scaled)
 df['strategy_returns'] = df['predicted_signal_4_tmrw'].shift(1) * df['PCT_CHANGE']
 df.dropna(inplace=True)
 
-#--------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------
 # Step 9: Evaluate with Pyfolio
-#--------------------------------------------------------------------------------------
-
+# -------------------------------------------------------------------------------------
 perf_stats = pf.timeseries.perf_stats(df.strategy_returns)
 
 # Print the performance stats
@@ -143,3 +145,4 @@ plt.show()
 # -------------------------------------------------------------------------------------
 # THE END
 # -------------------------------------------------------------------------------------
+
