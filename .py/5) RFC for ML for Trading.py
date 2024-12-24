@@ -14,7 +14,8 @@ import talib as ta
 import pyfolio as pf
 import yfinance as yf
 from graphviz import Source
-from PyPDF2 import PdfMerger, PdfReader
+from PyPDF2 import PdfMerger
+import os
 
 # -------------------------------------------------------------------------------------
 # Step 2: Import Dataset and Plot
@@ -98,27 +99,26 @@ for i, estimator in enumerate(rfc.estimators_):
     # Render each tree as a PDF
     graph = Source(dot_data)
     graph.format = "pdf"
-    temp_pdf_path = f"tree_{i}.pdf"  # Temporary path
-    graph.render(temp_pdf_path, cleanup=True)  # Render and ensure cleanup of Graphviz temp files
+    graph_binary = graph.pipe()
 
-    # Try to add rendered PDF to the merger
-    try:
-        with open(f"{temp_pdf_path}.pdf", "rb") as pdf_file:
-            merger.append(PdfReader(pdf_file))
-    except FileNotFoundError:
-        print(f"Error: {temp_pdf_path}.pdf not found.")
-
-    # Stop if visualizing too many trees becomes impractical (e.g., limit to 10)
-    if i >= 9:  # Edit this number if you want to visualize more or fewer trees
-        break
+    # Add rendered PDF directly to the merger
+    with open(f"temp_tree_{i}.pdf", "wb") as temp_file:
+        temp_file.write(graph_binary)
+        merger.append(temp_file.name)
 
 # Consolidate all PDFs into a single PDF
 output_pdf = "random_forest_trees.pdf"
 merger.write(output_pdf)  # Save combined PDF
 merger.close()
 
+# Remove temporary files
+for i in range(len(rfc.estimators_)):
+    temp_pdf = f"temp_tree_{i}.pdf"
+    if os.path.exists(temp_pdf):
+        os.remove(temp_pdf)
+
 # Open the consolidated PDF
-print(f"Random Forest Trees saved to {output_pdf}")
+os.system(f"start {output_pdf}")  # Automatically open the PDF
 
 # Predict
 y_pred = model.predict(X_test)
