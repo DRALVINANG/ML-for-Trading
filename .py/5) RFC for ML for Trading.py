@@ -1,3 +1,8 @@
+# Ensure compatible NumPy version for Pyfolio
+import os
+os.system("pip install numpy==1.23.0")
+os.system("pip install pandas==1.3.5")
+
 # -------------------------------------------------------------------------------------
 # Step 1: Install Libraries
 # -------------------------------------------------------------------------------------
@@ -15,7 +20,6 @@ import pyfolio as pf
 import yfinance as yf
 from graphviz import Source
 from PyPDF2 import PdfMerger
-import os
 
 # -------------------------------------------------------------------------------------
 # Step 2: Import Dataset and Plot
