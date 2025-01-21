@@ -18,6 +18,7 @@ import pyfolio as pf
 # Ensure compatible NumPy version for Pyfolio
 import os
 os.system("pip install numpy==1.23.0")
+os.system("pip install pandas==1.3.5")
 
 # -------------------------------------------------------------------------------------
 # Step 2: Import Dataset & Plot
