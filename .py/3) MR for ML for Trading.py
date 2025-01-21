@@ -1,3 +1,8 @@
+# Ensure compatible NumPy version for Pyfolio
+import os
+os.system("pip install numpy==1.23.0")
+os.system("pip install pandas==1.3.5")
+
 #--------------------------------------------------------------------------------------
 # Step 1: Pip Install and Import Libraries
 #--------------------------------------------------------------------------------------
@@ -14,11 +19,6 @@ from sklearn.preprocessing import StandardScaler
 import talib as ta
 import yfinance as yf
 import pyfolio as pf
-
-# Ensure compatible NumPy version for Pyfolio
-import os
-os.system("pip install numpy==1.23.0")
-os.system("pip install pandas==1.3.5")
 
 # -------------------------------------------------------------------------------------
 # Step 2: Import Dataset & Plot
