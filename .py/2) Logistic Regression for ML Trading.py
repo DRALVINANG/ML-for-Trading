@@ -1,13 +1,13 @@
-#--------------------------------------------------------------------------------------
-# Step 1: Pip Install and Import Libraries
-#--------------------------------------------------------------------------------------
-
-# 1a) Install and Import Data Manipulation Libraries
 # Ensure compatible NumPy version for Pyfolio
 import os
 os.system("pip install numpy==1.23.0")
 os.system("pip install pandas==1.3.5")
 
+#--------------------------------------------------------------------------------------
+# Step 1: Pip Install and Import Libraries
+#--------------------------------------------------------------------------------------
+
+# 1a) Install and Import Data Manipulation Libraries
 import numpy as np
 import pandas as pd
 
