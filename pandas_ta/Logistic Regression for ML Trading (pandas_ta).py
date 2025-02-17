@@ -51,6 +51,11 @@ def get_target_features(data):
     data['PCT_CHANGE'] = data['Close'].pct_change()
     data['VOLATILITY'] = data['PCT_CHANGE'].rolling(14).std() * 100
     data['RSI'] = ta.rsi(data['Close'], length=14)
+
+# NOTE: pandas TA has NO
+# 1) CORR (and since CORR depends on SMA, we don't need SMA now and we can remove it)
+# 2) ADX
+
     
     # Define Target (y)
     data['Returns_4_Tmrw'] = data['Close'].pct_change().shift(-1)
