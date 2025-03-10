@@ -1,6 +1,7 @@
 # -------------------------------------------------------------------------------------
 # Step 1: Install Libraries
 # -------------------------------------------------------------------------------------
+
 import yfinance as yf
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -14,6 +15,9 @@ from sklearn.metrics import r2_score
 # Import Data from 2020 to 2021
 ticker = 'TSLA'
 df = yf.download(ticker, start='2020-01-01', end='2021-12-31')
+
+# Handle multi-level columns, drop the extra level for compatibility
+df.columns = df.columns.droplevel(level=1)
 
 # Plotting the Close Price
 df1 = df.reset_index()
@@ -49,13 +53,13 @@ plt.show()
 X = df['High'].shift(+1)  # Yesterday's High
 y = df['Close']           # Today's Close
 
-df2 = pd.DataFrame({'High': X, 'Close': y})
-df2 = df2.dropna()
+# Drop rows with NaN values after shifting
+df2 = pd.DataFrame({'High': X, 'Close': y}).dropna()
 
 X = df2['High']
 y = df2['Close']
 
-df2
+df2  # Display the cleaned DataFrame
 
 # -------------------------------------------------------------------------------------
 # Step 4: Train Test Split
@@ -87,7 +91,7 @@ comparison = pd.DataFrame({
 })
 
 # Display the comparison
-display(comparison)
+print(comparison)
 
 # -------------------------------------------------------------------------------------
 # Step 6: R2 Score
