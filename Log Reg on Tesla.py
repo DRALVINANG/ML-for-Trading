@@ -15,7 +15,8 @@ from sklearn.metrics import classification_report
 # Download data for TSLA (Tesla) from Yahoo Finance
 ticker = 'TSLA'
 start_date = '2020-01-01'
-df = yf.download(ticker, start=start_date)
+end_date = '2022-01-01'
+df = yf.download(ticker, start=start_date, end=end_date)
 
 # Flatten multi-level columns (in case the update to yfinance requires it)
 df.columns = df.columns.droplevel(level=1)
@@ -75,7 +76,14 @@ print(f'Model Coefficient: {a}')
 print(f'Model Intercept: {b}')
 
 # -----------------------------
-# Step 7: Plot the Logistic Regression Curve
+# Step 7: Calculate Midpoint (50% point)
+# -----------------------------
+# Calculate midpoint where logistic function = 50%
+midpoint = -b / a
+print(f'Midpoint RSI (50% probability): {midpoint[0][0]}')
+
+# -----------------------------
+# Step 8: Plot the Logistic Regression Curve with Midpoint
 # -----------------------------
 # Define logistic function
 def logistic_func(X, a, b):
@@ -91,8 +99,14 @@ y_new = logistic_func(X_new, a, b).flatten()
 plt.scatter(X, y, label='Data Points')
 plt.plot(X_new, y_new, color='red', label='Logistic Curve')
 
+# Add vertical line at midpoint
+plt.axvline(midpoint[0][0], color='green', linestyle='--', label=f'Midpoint RSI = {midpoint[0][0]:.2f}')
+
+# Add horizontal line at y=0.5 (50% probability level)
+plt.axhline(0.5, color='blue', linestyle='--', label='50% Probability')
+
 # Customize the plot for better visualization
-plt.title('Logistic Regression Curve')
+plt.title('Logistic Regression Curve with Midpoint')
 plt.xlabel('RSI')
 plt.ylabel('Probability (BUY/SELL)')
 plt.legend()
@@ -100,7 +114,7 @@ plt.grid(True)
 plt.show()
 
 # -----------------------------
-# Step 8: Compare Predicted vs Actual
+# Step 9: Compare Predicted vs Actual
 # -----------------------------
 # Make predictions on the test set
 y_pred = model.predict(X_test)
@@ -114,14 +128,19 @@ comparison = pd.DataFrame({
 print(comparison)
 
 # -----------------------------
-# Step 9: Check the Model Accuracy
+# Step 10: Check the Model Accuracy
 # -----------------------------
 # Evaluate the model's performance using classification report
-target_names = ['class 0: SELL', 'class 1: BUY']
-print(classification_report(y_test, y_pred, target_names=target_names))
+# Dynamically get the labels present in the predicted data
+labels = np.unique(y_pred)
+
+# Adjust target_names according to the present labels
+target_names = [f'class {int(label)}: {"BUY" if label == 1 else "SELL"}' for label in labels]
+
+print(classification_report(y_test, y_pred, target_names=target_names, labels=labels))
 
 # -----------------------------
-# Step 10: Predict Example
+# Step 11: Predict Example
 # -----------------------------
 # Predict the signal for an RSI value of 55
 test = model.predict([[55]])
@@ -130,4 +149,3 @@ print(f'Predicted signal for RSI 55: {test[0]}')
 # If RSI < 30 --> Buy (1)
 # If RSI > 70 --> Sell (0)
 # Based on the logistic curve, anything below a certain threshold will be BUY
-
