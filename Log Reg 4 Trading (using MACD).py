@@ -22,7 +22,7 @@ from sklearn.preprocessing import StandardScaler
 #--------------------------------------------------------------------------------------
 
 ticker = 'D05.SI'
-data = yf.download(ticker, start='2022-01-01')
+data = yf.download(ticker, start='2020-01-01', end='2021-01-01')
 data.columns = data.columns.droplevel(level=1)
 
 print(data)
@@ -141,7 +141,7 @@ get_metrics(y_test, y_pred)
 
 # Get new data for backtesting
 ticker = 'D05.SI'
-df = yf.download(ticker, start='2016-01-01', end='2017-01-01')
+df = yf.download(ticker, start='2022-01-01', end='2023-01-01')
 df.columns = df.columns.droplevel(level=1)
 
 # Calculate Features
