@@ -22,7 +22,7 @@ from io import BytesIO
 #--------------------------------------------------------------------------------------
 
 ticker = 'D05.SI'
-data = yf.download(ticker, start='2022-01-01')
+data = yf.download(ticker, start='2022-01-01', end='2023-01-01')
 data.columns = data.columns.droplevel(level=1)
 
 # Print the first few rows of the data
@@ -150,7 +150,7 @@ get_metrics(y_test, y_pred)
 
 # Get new data for backtesting
 ticker = 'D05.SI'
-df = yf.download(ticker, start='2016-01-01', end='2017-01-01')
+df = yf.download(ticker, start='2023-01-01', end='2024-01-01')
 df.columns = df.columns.droplevel(level=1)
 
 # Calculate Features for backtesting data
@@ -195,4 +195,3 @@ plt.show()
 #--------------------------------------------------------------------------------------
 # End of the Script
 #--------------------------------------------------------------------------------------
-
