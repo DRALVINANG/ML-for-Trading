@@ -1,6 +1,6 @@
 import os
-os.system("pip install numpy==1.23.0")
-os.system("pip install pandas==1.3.5")
+#os.system("pip install numpy==1.23.0")
+#os.system("pip install pandas==1.3.5")
 
 # -------------------------------------------------------------------------------------
 # Step 1: Install Libraries
@@ -25,7 +25,7 @@ from tensorflow import keras
 # -------------------------------------------------------------------------------------
 
 ticker = 'D05.SI'
-data = yf.download(ticker, start='2022-01-01')
+data = yf.download(ticker, start='2022-01-01', end = '2023-01-01')
 data.columns = data.columns.droplevel(level=1)
 
 print(data)
@@ -147,7 +147,7 @@ get_metrics(y_test, y_pred)
 # Step 9: Backtesting Our Model
 # -------------------------------------------------------------------------------------
 
-df = yf.download(ticker, start='2016-01-01', end='2017-01-01')
+df = yf.download(ticker, start='2023-01-01', end='2024-01-01')
 df.columns = df.columns.droplevel(level=1)
 
 df['PCT_CHANGE'] = df['Close'].pct_change()
@@ -178,4 +178,5 @@ plt.show()
 # -------------------------------------------------------------------------------------
 # THE END
 # -------------------------------------------------------------------------------------
+
 
