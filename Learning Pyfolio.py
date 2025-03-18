@@ -28,7 +28,7 @@ start_date = '2023-01-01'
 DBS_history = yf.download('D05.SI', start=start_date)
 
 # Display the 'Close' price of DBS
-DBS_history['Close']
+print(DBS_history['Close'])
 
 #--------------------------
 # Step 3: Plot DBS History
