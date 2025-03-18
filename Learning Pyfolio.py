@@ -2,9 +2,11 @@
 # Step 1: Install and Import Libraries
 #--------------------------
 
-# Install necessary libraries (if not installed yet)
-#!pip install pyfolio
-#!pip install pandas==1.2.5  # Downgrade pandas to support iteritems()
+#THONNY MUST HAVE THESE VERSIONS INSTALLED OR PYFOLIO WILL NOT WORK!!!
+#import os
+#os.system("pip install numpy==1.23.0")
+#os.system("pip install pandas==1.3.5")
+
 
 # Import libraries
 import yfinance as yf
@@ -59,9 +61,16 @@ DBS_returns = pd.Series(DBS_returns.squeeze())
 #--------------------------
 # Step 5: Use Pyfolio to Create Simple Tear Sheet
 #--------------------------
+pf.timeseries.cum_returns(DBS_returns).plot()
+plt.ylabel('DBS Returns')
+plt.show()
+
+perf_stats = pf.timeseries.perf_stats(DBS_returns)
+print(perf_stats)
 
 # Generate a simple Pyfolio tear sheet for the DBS returns
 pf.create_simple_tear_sheet(DBS_returns)
+plt.show()
 
 #--------------------------
 # End of Script
