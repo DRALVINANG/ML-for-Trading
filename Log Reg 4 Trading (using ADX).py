@@ -32,7 +32,8 @@ data.columns = data.columns.droplevel(level=1)
 # Round the data to 2 decimal places
 data = data.round(2)
 
-print(tabulate(data.head(), headers='keys', tablefmt='pretty'))  # Display the first few rows in a tabular format
+print(tabulate(data.head(), headers='keys', tablefmt='pretty'))
+# Display the first few rows in a tabular format
 
 # Plotting the Close Price
 data['Close'].plot(figsize=(18, 5), color='b')
@@ -97,7 +98,8 @@ df_combined = pd.DataFrame({
 
 df_combined = df_combined.dropna()
 df_combined = df_combined.round(2)  # Round to 2 decimal places
-print(tabulate(df_combined.head(10), headers='keys', tablefmt='pretty'))  # Displaying the first 10 rows
+print(tabulate(df_combined.head(10), headers='keys', tablefmt='pretty'))
+# Displaying the first 10 rows
 
 # Split into 80% training and 20% testing
 split = int(0.8 * len(X))
@@ -125,21 +127,22 @@ model = model.fit(X_train, y_train)
 # Make predictions on the test set
 y_pred = model.predict(X_test)
 
-# Create a DataFrame with predicted vs actual class and additional columns
-test_dates = data.index[split:len(y_pred) + split]  # Match the test set size with y_pred
-returns_4_tmrw = data['Returns_4_Tmrw'].iloc[split:split+len(y_pred)]  # Ensure it matches the length
+
+returns_4_tmrw = data['Returns_4_Tmrw'].iloc[split:split+len(y_pred)]
+# Ensure it matches the length
 
 # Create DataFrame
 data1 = pd.DataFrame({
-    "Predicted_Class": y_pred,
+    "Returns_4_Tmrw": returns_4_tmrw, 
     "Actual_Class": y_test.tolist(),
-    "Date": test_dates,  # Dates corresponding to the test set
-    "Returns_4_Tmrw": returns_4_tmrw  # Corresponding returns
+    "Predicted_Class": y_pred
+      # Corresponding returns
 })
 
 data1 = data1.round(2)  # Round to 2 decimal places
 # Print the DataFrame
-print(tabulate(data1.head(10), headers='keys', tablefmt='pretty'))  # Displaying the first 10 rows
+print(tabulate(data1.head(10), headers='keys', tablefmt='pretty'))
+# Displaying the first 10 rows
 
 #--------------------------------------------------------------------------------------
 # Step 7: Confusion Matrix and Accuracy Metric
