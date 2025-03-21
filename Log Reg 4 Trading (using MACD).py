@@ -1,7 +1,3 @@
-#--------------------------------------------------------------------------------------
-# Step 1: Pip Install and Import Libraries
-#--------------------------------------------------------------------------------------
-
 import os
 #os.system("pip install numpy==1.23.0")
 #os.system("pip install pandas==1.3.5")
@@ -26,6 +22,9 @@ from tabulate import tabulate  # Importing tabulate
 ticker = 'D05.SI'
 data = yf.download(ticker, start='2020-01-01', end='2021-01-01')
 data.columns = data.columns.droplevel(level=1)
+
+# Round all values to 2 decimal places
+data = data.round(2)
 
 print(tabulate(data.head(10), headers='keys', tablefmt='pretty'))  # Displaying first 10 rows
 
@@ -68,6 +67,9 @@ def get_target_features(data):
 
     # Drop NaN rows (necessary after rolling and shifting operations)
     data = data.dropna()
+
+    # Round all feature columns to 2 decimal places
+    data = data.round(2)
 
     return data['Actual_Signal'], data[['VOLATILITY', 'CORR', 'RSI', 'MACD']]
 
@@ -139,8 +141,6 @@ data1 = data1.round(2)  # Round to 2 decimal places
 # Print the DataFrame
 print(tabulate(data1.head(10), headers='keys', tablefmt='pretty'))  # Displaying the first 10 rows
 
-
-
 #--------------------------------------------------------------------------------------
 # Step 8: Confusion Matrix and Accuracy Metric
 #--------------------------------------------------------------------------------------
@@ -193,6 +193,9 @@ df['CORR'] = df['Close'].rolling(window=14).corr(df['SMA'])
 
 df = df.dropna()
 
+# Round all values to 2 decimal places
+df = df.round(2)
+
 # Scale and Predict
 df_scaled = sc.transform(df[['VOLATILITY', 'CORR', 'RSI', 'MACD']])
 df['predicted_signal_4_tmrw'] = model.predict(df_scaled)
@@ -218,5 +221,4 @@ print(perf_stats)
 import matplotlib.pyplot as plt
 pf.create_simple_tear_sheet(df.strategy_returns)
 plt.show()
-
 
