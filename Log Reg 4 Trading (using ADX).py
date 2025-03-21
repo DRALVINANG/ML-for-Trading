@@ -3,8 +3,8 @@
 #--------------------------------------------------------------------------------------
 
 import os
-os.system("pip install numpy==1.23.0")
-os.system("pip install pandas==1.3.5")
+#os.system("pip install numpy==1.23.0")
+#os.system("pip install pandas==1.3.5")
 
 import numpy as np
 import pandas as pd
@@ -17,12 +17,14 @@ from sklearn.linear_model import LogisticRegression
 from sklearn import metrics
 from sklearn.preprocessing import StandardScaler
 
+pd.set_option('display.max_columns', 20)
+
 #--------------------------------------------------------------------------------------
 # Step 2: Import Dataset & Plot
 #--------------------------------------------------------------------------------------
 
 ticker = 'D05.SI'
-data = yf.download(ticker, start='2022-01-01')
+data = yf.download(ticker, start='2022-01-01', end = '2022-12-31')
 data.columns = data.columns.droplevel(level=1)
 
 print(data)
@@ -41,7 +43,7 @@ plt.show()
 def get_target_features(data):
     # -------------------------------------------------------------
     # Define Features (X)
-    
+
     # Volatility (Using Percentage Change for volatility calculation)
     data['PCT_CHANGE'] = data['Close'].pct_change()
     data['VOLATILITY'] = data['PCT_CHANGE'].rolling(14).std() * 100
@@ -75,8 +77,18 @@ def get_target_features(data):
 # Split Data
 y, X = get_target_features(data)
 
-y.head()
-X.head()
+# Create DataFrame of X and y to display first 10 rows
+df_combined = pd.DataFrame({
+    "VOLATILITY": X['VOLATILITY'],
+    "CORR": X['CORR'],
+    "RSI": X['RSI'],
+    "ADX": X['ADX'],
+    "Returns_4_Tmrw": data['Returns_4_Tmrw'],  # Added Returns_4_Tmrw here
+    "Actual_Signal": y
+})
+
+df_combined = df_combined.dropna()
+print(df_combined.head(10))  # Displaying the first 10 rows
 
 # Split into 80% training and 20% testing
 split = int(0.8 * len(X))
@@ -104,9 +116,20 @@ model = model.fit(X_train, y_train)
 # Make predictions on the test set
 y_pred = model.predict(X_test)
 
-# Show the probabilities
-probability = model.predict_proba(X_test)
-print(probability)
+# Create a DataFrame with predicted vs actual class and additional columns
+test_dates = data.index[split:len(y_pred) + split]  # Match the test set size with y_pred
+returns_4_tmrw = data['Returns_4_Tmrw'].iloc[split:split+len(y_pred)]  # Ensure it matches the length
+
+# Create DataFrame
+data1 = pd.DataFrame({
+    "Predicted_Class": y_pred,
+    "Actual_Class": y_test.tolist(),
+    "Date": test_dates,  # Dates corresponding to the test set
+    "Returns_4_Tmrw": returns_4_tmrw  # Corresponding returns
+})
+
+# Print the DataFrame
+print(data1)
 
 #--------------------------------------------------------------------------------------
 # Step 7: Confusion Matrix and Accuracy Metric
@@ -114,7 +137,7 @@ print(probability)
 
 def get_metrics(y_test, predicted):
     confusion_matrix_data = metrics.confusion_matrix(y_test, predicted)
-    
+
     # Plot the confusion matrix
     fig, ax = plt.subplots(figsize=(6, 4))
     sns.heatmap(confusion_matrix_data, fmt="d", cmap='Blues', cbar=False, annot=True, ax=ax)
@@ -140,7 +163,7 @@ get_metrics(y_test, y_pred)
 
 # Get new data for backtesting
 ticker = 'D05.SI'
-df = yf.download(ticker, start='2016-01-01', end='2017-01-01')
+df = yf.download(ticker, start='2023-01-01', end='2024-01-01')
 df.columns = df.columns.droplevel(level=1)
 
 # Calculate Features
@@ -166,6 +189,7 @@ df['predicted_signal_4_tmrw'] = model.predict(df_scaled)
 # Calculate Strategy Returns
 df['strategy_returns'] = df['predicted_signal_4_tmrw'].shift(1) * df['PCT_CHANGE']
 df.dropna(inplace=True)
+print(df)
 
 #--------------------------------------------------------------------------------------
 # Step 9: Using Pyfolio
