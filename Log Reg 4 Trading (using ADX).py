@@ -29,6 +29,9 @@ ticker = 'D05.SI'
 data = yf.download(ticker, start='2022-01-01', end = '2022-12-31')
 data.columns = data.columns.droplevel(level=1)
 
+# Round the data to 2 decimal places
+data = data.round(2)
+
 print(tabulate(data.head(), headers='keys', tablefmt='pretty'))  # Display the first few rows in a tabular format
 
 # Plotting the Close Price
@@ -70,6 +73,9 @@ def get_target_features(data):
     # Drop NaN rows (necessary after rolling and shifting operations)
     data = data.dropna()
 
+    # Round all columns to 2 decimal places
+    data = data.round(2)
+
     return data['Actual_Signal'], data[['VOLATILITY', 'CORR', 'RSI', 'ADX']]
 
 #--------------------------------------------------------------------------------------
@@ -90,6 +96,7 @@ df_combined = pd.DataFrame({
 })
 
 df_combined = df_combined.dropna()
+df_combined = df_combined.round(2)  # Round to 2 decimal places
 print(tabulate(df_combined.head(10), headers='keys', tablefmt='pretty'))  # Displaying the first 10 rows
 
 # Split into 80% training and 20% testing
@@ -130,6 +137,7 @@ data1 = pd.DataFrame({
     "Returns_4_Tmrw": returns_4_tmrw  # Corresponding returns
 })
 
+data1 = data1.round(2)  # Round to 2 decimal places
 # Print the DataFrame
 print(tabulate(data1.head(10), headers='keys', tablefmt='pretty'))  # Displaying the first 10 rows
 
@@ -183,6 +191,9 @@ df['SMA'] = ta.sma(df['Close'], timeperiod=14)
 df['CORR'] = df['Close'].rolling(window=14).corr(df['SMA'])
 
 df = df.dropna()
+
+# Round the backtest data to 2 decimal places
+df = df.round(2)
 
 # Scale and Predict
 df_scaled = sc.transform(df[['VOLATILITY', 'CORR', 'RSI', 'ADX']])  # Using only these four features
