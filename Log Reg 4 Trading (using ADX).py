@@ -5,6 +5,7 @@
 import os
 #os.system("pip install numpy==1.23.0")
 #os.system("pip install pandas==1.3.5")
+#os.system("pip install tabulate")
 
 import numpy as np
 import pandas as pd
@@ -16,6 +17,7 @@ import seaborn as sns
 from sklearn.linear_model import LogisticRegression
 from sklearn import metrics
 from sklearn.preprocessing import StandardScaler
+from tabulate import tabulate
 
 pd.set_option('display.max_columns', 20)
 
@@ -27,7 +29,7 @@ ticker = 'D05.SI'
 data = yf.download(ticker, start='2022-01-01', end = '2022-12-31')
 data.columns = data.columns.droplevel(level=1)
 
-print(data)
+print(tabulate(data.head(), headers='keys', tablefmt='pretty'))  # Display the first few rows in a tabular format
 
 # Plotting the Close Price
 data['Close'].plot(figsize=(18, 5), color='b')
@@ -88,7 +90,7 @@ df_combined = pd.DataFrame({
 })
 
 df_combined = df_combined.dropna()
-print(df_combined.head(10))  # Displaying the first 10 rows
+print(tabulate(df_combined.head(10), headers='keys', tablefmt='pretty'))  # Displaying the first 10 rows
 
 # Split into 80% training and 20% testing
 split = int(0.8 * len(X))
@@ -129,7 +131,7 @@ data1 = pd.DataFrame({
 })
 
 # Print the DataFrame
-print(data1)
+print(tabulate(data1.head(10), headers='keys', tablefmt='pretty'))  # Displaying the first 10 rows
 
 #--------------------------------------------------------------------------------------
 # Step 7: Confusion Matrix and Accuracy Metric
@@ -189,7 +191,9 @@ df['predicted_signal_4_tmrw'] = model.predict(df_scaled)
 # Calculate Strategy Returns
 df['strategy_returns'] = df['predicted_signal_4_tmrw'].shift(1) * df['PCT_CHANGE']
 df.dropna(inplace=True)
-print(df)
+
+# Display the backtest data
+print(tabulate(df.head(10), headers='keys', tablefmt='pretty'))  # Displaying the first 10 rows
 
 #--------------------------------------------------------------------------------------
 # Step 9: Using Pyfolio
