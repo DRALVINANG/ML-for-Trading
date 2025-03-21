@@ -3,8 +3,9 @@
 #--------------------------------------------------------------------------------------
 
 import os
-os.system("pip install numpy==1.23.0")
-os.system("pip install pandas==1.3.5")
+#os.system("pip install numpy==1.23.0")
+#os.system("pip install pandas==1.3.5")
+#os.system("pip install tabulate")  # Installing tabulate
 
 import numpy as np
 import pandas as pd
@@ -16,6 +17,7 @@ import seaborn as sns
 from sklearn.linear_model import LogisticRegression
 from sklearn import metrics
 from sklearn.preprocessing import StandardScaler
+from tabulate import tabulate  # Importing tabulate
 
 #--------------------------------------------------------------------------------------
 # Step 2: Import Dataset & Plot
@@ -25,7 +27,7 @@ ticker = 'D05.SI'
 data = yf.download(ticker, start='2020-01-01', end='2021-01-01')
 data.columns = data.columns.droplevel(level=1)
 
-print(data)
+print(tabulate(data.head(10), headers='keys', tablefmt='pretty'))  # Displaying first 10 rows
 
 # Plotting the Close Price
 data['Close'].plot(figsize=(18, 5), color='b')
@@ -79,12 +81,30 @@ y, X = get_target_features(data)
 y.head()
 X.head()
 
+# Create DataFrame of X and y to display first 10 rows
+df_combined = pd.DataFrame({
+    "VOLATILITY": X['VOLATILITY'],
+    "CORR": X['CORR'],
+    "RSI": X['RSI'],
+    "MACD": X['MACD'],  # Changed ADX to MACD
+    "Returns_4_Tmrw": data['Returns_4_Tmrw'],  # Added Returns_4_Tmrw here
+    "Actual_Signal": y
+})
+
+df_combined = df_combined.dropna()
+df_combined = df_combined.round(2)  # Round to 2 decimal places
+print(tabulate(df_combined.head(10), headers='keys', tablefmt='pretty'))  # Displaying the first 10 rows
+
+#--------------------------------------------------------------------------------------
+# Step 5: Train Test Split
+#--------------------------------------------------------------------------------------
+
 # Split into 80% training and 20% testing
 split = int(0.8 * len(X))
 X_train, X_test, y_train, y_test = X[:split], X[split:], y[:split], y[split:]
 
 #--------------------------------------------------------------------------------------
-# Step 5: Scale the Features
+# Step 6: Scale the Features
 #--------------------------------------------------------------------------------------
 
 # Initialize StandardScaler
@@ -95,7 +115,7 @@ X_train = sc.fit_transform(X_train)
 X_test = sc.transform(X_test)
 
 #--------------------------------------------------------------------------------------
-# Step 6: Train the Logistic Regression Model
+# Step 7: Train the Logistic Regression Model
 #--------------------------------------------------------------------------------------
 
 # Initialize and train the model
@@ -105,12 +125,24 @@ model = model.fit(X_train, y_train)
 # Make predictions on the test set
 y_pred = model.predict(X_test)
 
-# Show the probabilities
-probability = model.predict_proba(X_test)
-print(probability)
+returns_4_tmrw = data['Returns_4_Tmrw'].iloc[split:split+len(y_pred)]
+# Ensure it matches the length
+
+# Create DataFrame for Evaluation Metrics
+data1 = pd.DataFrame({
+    "Returns_4_Tmrw": returns_4_tmrw, 
+    "Actual_Class": y_test.tolist(),
+    "Predicted_Class": y_pred  # Corresponding returns
+})
+
+data1 = data1.round(2)  # Round to 2 decimal places
+# Print the DataFrame
+print(tabulate(data1.head(10), headers='keys', tablefmt='pretty'))  # Displaying the first 10 rows
+
+
 
 #--------------------------------------------------------------------------------------
-# Step 7: Confusion Matrix and Accuracy Metric
+# Step 8: Confusion Matrix and Accuracy Metric
 #--------------------------------------------------------------------------------------
 
 def get_metrics(y_test, predicted):
@@ -136,7 +168,7 @@ def get_metrics(y_test, predicted):
 get_metrics(y_test, y_pred)
 
 #--------------------------------------------------------------------------------------
-# Step 8: Backtesting Our Model
+# Step 9: Backtesting Our Model
 #--------------------------------------------------------------------------------------
 
 # Get new data for backtesting
@@ -169,8 +201,11 @@ df['predicted_signal_4_tmrw'] = model.predict(df_scaled)
 df['strategy_returns'] = df['predicted_signal_4_tmrw'].shift(1) * df['PCT_CHANGE']
 df.dropna(inplace=True)
 
+# Display the backtest data
+print(tabulate(df.head(10), headers='keys', tablefmt='pretty'))  # Displaying the first 10 rows
+
 #--------------------------------------------------------------------------------------
-# Step 9: Using Pyfolio
+# Step 10: Using Pyfolio
 #--------------------------------------------------------------------------------------
 
 # Performance statistics using Pyfolio
@@ -183,4 +218,5 @@ print(perf_stats)
 import matplotlib.pyplot as plt
 pf.create_simple_tear_sheet(df.strategy_returns)
 plt.show()
+
 
