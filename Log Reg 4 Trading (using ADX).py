@@ -30,7 +30,7 @@ data = yf.download(ticker, start='2022-01-01', end = '2022-12-31')
 data.columns = data.columns.droplevel(level=1)
 
 # Round the data to 2 decimal places
-data = data.round(2)
+data = data.round(5)
 
 print(tabulate(data.head(), headers='keys', tablefmt='pretty'))
 # Display the first few rows in a tabular format
@@ -75,7 +75,7 @@ def get_target_features(data):
     data = data.dropna()
 
     # Round all columns to 2 decimal places
-    data = data.round(2)
+    data = data.round(5)
 
     return data['Actual_Signal'], data[['VOLATILITY', 'CORR', 'RSI', 'ADX']]
 
@@ -97,7 +97,7 @@ df_combined = pd.DataFrame({
 })
 
 df_combined = df_combined.dropna()
-df_combined = df_combined.round(2)  # Round to 2 decimal places
+df_combined = df_combined.round(5)  # Round to 2 decimal places
 print(tabulate(df_combined.head(10), headers='keys', tablefmt='pretty'))
 # Displaying the first 10 rows
 
@@ -128,18 +128,18 @@ model = model.fit(X_train, y_train)
 y_pred = model.predict(X_test)
 
 
-returns_4_tmrw = data['Returns_4_Tmrw'].iloc[split:split+len(y_pred)]
-# Ensure it matches the length
+y_test_indices = X.index[split:]  # Indices for the test set
 
-# Create DataFrame
+returns_test = data.loc[y_test_indices, 'Returns_4_Tmrw'].values
+
 data1 = pd.DataFrame({
-    "Returns_4_Tmrw": returns_4_tmrw, 
+    "Returns_4_Tmrw": returns_test,
     "Actual_Class": y_test.tolist(),
     "Predicted_Class": y_pred
-      # Corresponding returns
-})
+}, index=y_test_indices)  # Use the same indices for consistency
 
-data1 = data1.round(2)  # Round to 2 decimal places
+
+data1 = data1.round(5)  # Round to 2 decimal places
 # Print the DataFrame
 print(tabulate(data1.head(10), headers='keys', tablefmt='pretty'))
 # Displaying the first 10 rows
@@ -196,7 +196,7 @@ df['CORR'] = df['Close'].rolling(window=14).corr(df['SMA'])
 df = df.dropna()
 
 # Round the backtest data to 2 decimal places
-df = df.round(2)
+df = df.round(5)
 
 # Scale and Predict
 df_scaled = sc.transform(df[['VOLATILITY', 'CORR', 'RSI', 'ADX']])  # Using only these four features
