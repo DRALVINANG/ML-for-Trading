@@ -205,7 +205,12 @@ df = df.round(5)
 
 # Scale and Predict on backtesting data
 df_scaled = sc.transform(df[['VOLATILITY', 'CORR', 'RSI', 'ADX']])
-df['predicted_signal_4_tmrw'] = model.predict(df_scaled)
+
+# Predict the continuous values
+y_pred_continuous = model.predict(df_scaled)
+
+# Convert continuous predictions into binary signals (1 or 0)
+df['predicted_signal_4_tmrw'] = np.where(y_pred_continuous > 0.5, 1, 0)
 
 # Round 'predicted_signal_4_tmrw' to 5 decimal places
 df['predicted_signal_4_tmrw'] = df['predicted_signal_4_tmrw'].round(5)
