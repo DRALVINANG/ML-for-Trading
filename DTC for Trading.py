@@ -16,6 +16,9 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.tree import export_graphviz  # Import export_graphviz for visualization
 from graphviz import Source
 from io import BytesIO
+from tabulate import tabulate
+
+pd.set_option('display.max_columns', 20)
 
 #--------------------------------------------------------------------------------------
 # Step 2: Import Dataset & Plot
@@ -25,8 +28,11 @@ ticker = 'D05.SI'
 data = yf.download(ticker, start='2022-01-01', end='2023-01-01')
 data.columns = data.columns.droplevel(level=1)
 
-# Print the first few rows of the data
-print(data.head())
+# Round the data to 5 decimal places
+data = data.round(5)
+
+print(tabulate(data.head(), headers='keys', tablefmt='pretty'))
+# Display the first few rows in a tabular format
 
 # Plotting the Close Price
 data['Close'].plot(figsize=(18, 5), color='b')
@@ -67,6 +73,9 @@ def get_target_features(data):
     # Drop NaN rows (necessary after rolling and shifting operations)
     data = data.dropna()
 
+    # Round all columns to 5 decimal places
+    data = data.round(5)
+
     return data['Actual_Signal'], data[['VOLATILITY', 'CORR', 'RSI', 'ADX']]
 
 #--------------------------------------------------------------------------------------
@@ -75,6 +84,21 @@ def get_target_features(data):
 
 # Split Data
 y, X = get_target_features(data)
+
+# Create DataFrame of X and y to display first 10 rows
+df_combined = pd.DataFrame({
+    "VOLATILITY": X['VOLATILITY'],
+    "CORR": X['CORR'],
+    "RSI": X['RSI'],
+    "ADX": X['ADX'],
+    "Returns_4_Tmrw": data['Returns_4_Tmrw'],  # Added Returns_4_Tmrw here
+    "Actual_Signal": y
+})
+
+df_combined = df_combined.dropna()
+df_combined = df_combined.round(5)  # Round to 5 decimal places
+print(tabulate(df_combined.head(10), headers='keys', tablefmt='pretty'))
+# Displaying the first 10 rows
 
 # Split into 80% training and 20% testing
 split = int(0.8 * len(X))
@@ -153,7 +177,7 @@ ticker = 'D05.SI'
 df = yf.download(ticker, start='2023-01-01', end='2024-01-01')
 df.columns = df.columns.droplevel(level=1)
 
-# Calculate Features for backtesting data
+# Calculate Features
 df['PCT_CHANGE'] = df['Close'].pct_change()
 df['VOLATILITY'] = df['PCT_CHANGE'].rolling(14).std() * 100
 
@@ -169,13 +193,20 @@ df['CORR'] = df['Close'].rolling(window=14).corr(df['SMA'])
 
 df = df.dropna()
 
-# Scale and Predict on backtesting data
+# Round the backtest data to 5 decimal places
+df = df.round(5)
+
+# Scale and Predict
 df_scaled = sc.transform(df[['VOLATILITY', 'CORR', 'RSI', 'ADX']])  # Using only these four features
 df['predicted_signal_4_tmrw'] = model.predict(df_scaled)
 
+
 # Calculate Strategy Returns
-df['strategy_returns'] = df['predicted_signal_4_tmrw'].shift(1) * df['PCT_CHANGE']
+df['strategy_returns'] = df['predicted_signal_4_tmrw'] * df['PCT_CHANGE'].shift(-1)
 df.dropna(inplace=True)
+
+# Display the backtest data
+print(tabulate(df.head(10), headers='keys', tablefmt='pretty'))  # Displaying the first 10 rows
 
 #--------------------------------------------------------------------------------------
 # Step 10: Using Pyfolio
@@ -195,3 +226,4 @@ plt.show()
 #--------------------------------------------------------------------------------------
 # End of the Script
 #--------------------------------------------------------------------------------------
+
