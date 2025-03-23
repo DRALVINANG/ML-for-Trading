@@ -3,10 +3,10 @@
 #--------------------------------------------------------------------------------------
 
 import os
-os.system("pip install numpy==1.23.0")
-os.system("pip install pandas==1.3.5")
+#os.system("pip install numpy==1.23.0")
+#os.system("pip install pandas==1.3.5")
+#os.system("pip install tabulate")  # Installing tabulate
 
-import os
 import numpy as np
 import pandas as pd
 import pandas_ta as ta
@@ -14,9 +14,12 @@ import pyfolio as pf
 import yfinance as yf
 import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.linear_model import LinearRegression  # Changed to Multiple Linear Regression
+from sklearn.linear_model import LinearRegression  # Multiple Linear Regression
 from sklearn import metrics
 from sklearn.preprocessing import StandardScaler
+from tabulate import tabulate
+
+pd.set_option('display.max_columns', 20)
 
 #--------------------------------------------------------------------------------------
 # Step 2: Import Dataset & Plot
@@ -26,8 +29,11 @@ ticker = 'D05.SI'
 data = yf.download(ticker, start='2020-01-01', end='2021-01-01')
 data.columns = data.columns.droplevel(level=1)
 
-# Print the first few rows of the data
-print(data.head())
+# Round the data to 5 decimal places
+data = data.round(5)
+
+print(tabulate(data.head(), headers='keys', tablefmt='pretty'))
+# Display the first few rows in a tabular format
 
 # Plotting the Close Price
 data['Close'].plot(figsize=(18, 5), color='b')
@@ -43,7 +49,7 @@ plt.show()
 def get_target_features(data):
     # -------------------------------------------------------------
     # Define Features (X)
-    
+
     # Volatility (Using Percentage Change for volatility calculation)
     data['PCT_CHANGE'] = data['Close'].pct_change()
     data['VOLATILITY'] = data['PCT_CHANGE'].rolling(14).std() * 100
@@ -68,6 +74,9 @@ def get_target_features(data):
     # Drop NaN rows (necessary after rolling and shifting operations)
     data = data.dropna()
 
+    # Round all columns to 5 decimal places
+    data = data.round(5)
+
     return data['Actual_Signal'], data[['VOLATILITY', 'CORR', 'RSI', 'ADX']]
 
 #--------------------------------------------------------------------------------------
@@ -76,6 +85,21 @@ def get_target_features(data):
 
 # Split Data
 y, X = get_target_features(data)
+
+# Create DataFrame of X and y to display first 10 rows
+df_combined = pd.DataFrame({
+    "VOLATILITY": X['VOLATILITY'],
+    "CORR": X['CORR'],
+    "RSI": X['RSI'],
+    "ADX": X['ADX'],
+    "Returns_4_Tmrw": data['Returns_4_Tmrw'],  # Added Returns_4_Tmrw here
+    "Actual_Signal": y
+})
+
+df_combined = df_combined.dropna()
+df_combined = df_combined.round(5)  # Round to 5 decimal places
+print(tabulate(df_combined.head(10), headers='keys', tablefmt='pretty'))
+# Displaying the first 10 rows
 
 # Split into 80% training and 20% testing
 split = int(0.8 * len(X))
@@ -106,8 +130,24 @@ y_pred = model.predict(X_test)
 # Since this is regression, let's categorize the continuous values into binary 0 or 1
 y_pred = np.where(y_pred > 0.5, 1, 0)
 
-# Show the predicted values
-print(f'Predicted values: {y_pred}')
+# Get indices for the test set
+y_test_indices = X.index[split:]
+
+# Get the returns for the test set
+returns_test = data.loc[y_test_indices, 'Returns_4_Tmrw'].values
+
+# Create a DataFrame for evaluation metrics
+data1 = pd.DataFrame({
+    "Returns_4_Tmrw": returns_test, 
+    "Actual_Class": y_test.tolist(),
+    "Predicted_Class": y_pred
+}, index=y_test_indices)  # Use the same indices for consistency
+
+# Round to 5 decimal places
+data1 = data1.round(5)
+
+# Print the DataFrame
+print(tabulate(data1.head(10), headers='keys', tablefmt='pretty'))  # Displaying the first 10 rows
 
 #--------------------------------------------------------------------------------------
 # Step 7: Confusion Matrix and Accuracy Metric
@@ -115,7 +155,7 @@ print(f'Predicted values: {y_pred}')
 
 def get_metrics(y_test, predicted):
     confusion_matrix_data = metrics.confusion_matrix(y_test, predicted)
-    
+
     # Plot the confusion matrix
     fig, ax = plt.subplots(figsize=(6, 4))
     sns.heatmap(confusion_matrix_data, fmt="d", cmap='Blues', cbar=False, annot=True, ax=ax)
@@ -160,13 +200,24 @@ df['CORR'] = df['Close'].rolling(window=14).corr(df['SMA'])
 
 df = df.dropna()
 
+# Round the backtest data to 5 decimal places
+df = df.round(5)
+
 # Scale and Predict on backtesting data
-df_scaled = sc.transform(df[['VOLATILITY', 'CORR', 'RSI', 'ADX']])  # Using only these four features
+df_scaled = sc.transform(df[['VOLATILITY', 'CORR', 'RSI', 'ADX']])
 df['predicted_signal_4_tmrw'] = model.predict(df_scaled)
+
+# Round 'predicted_signal_4_tmrw' to 5 decimal places
+df['predicted_signal_4_tmrw'] = df['predicted_signal_4_tmrw'].round(5)
 
 # Calculate Strategy Returns
 df['strategy_returns'] = df['predicted_signal_4_tmrw'].shift(1) * df['PCT_CHANGE']
+df['strategy_returns'] = df['strategy_returns'].round(5)  # Round to 5 decimal places
+
 df.dropna(inplace=True)
+
+# Display the backtest data
+print(tabulate(df.head(10), headers='keys', tablefmt='pretty'))  
 
 #--------------------------------------------------------------------------------------
 # Step 9: Using Pyfolio
