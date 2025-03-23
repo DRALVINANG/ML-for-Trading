@@ -23,9 +23,10 @@ ticker = 'D05.SI'
 data = yf.download(ticker, start='2020-01-01', end='2021-01-01')
 data.columns = data.columns.droplevel(level=1)
 
-# Round all values to 2 decimal places
-data = data.round(2)
+# Round all values to 5 decimal places
+data = data.round(5)
 
+# Print the first 10 rows of the data
 print(tabulate(data.head(10), headers='keys', tablefmt='pretty'))  # Displaying first 10 rows
 
 # Plotting the Close Price
@@ -68,8 +69,8 @@ def get_target_features(data):
     # Drop NaN rows (necessary after rolling and shifting operations)
     data = data.dropna()
 
-    # Round all feature columns to 2 decimal places
-    data = data.round(2)
+    # Round all feature columns to 5 decimal places
+    data = data.round(5)
 
     return data['Actual_Signal'], data[['VOLATILITY', 'CORR', 'RSI', 'MACD']]
 
@@ -79,9 +80,6 @@ def get_target_features(data):
 
 # Split Data
 y, X = get_target_features(data)
-
-y.head()
-X.head()
 
 # Create DataFrame of X and y to display first 10 rows
 df_combined = pd.DataFrame({
@@ -94,7 +92,7 @@ df_combined = pd.DataFrame({
 })
 
 df_combined = df_combined.dropna()
-df_combined = df_combined.round(2)  # Round to 2 decimal places
+df_combined = df_combined.round(5)  # Round to 5 decimal places
 print(tabulate(df_combined.head(10), headers='keys', tablefmt='pretty'))  # Displaying the first 10 rows
 
 #--------------------------------------------------------------------------------------
@@ -127,17 +125,22 @@ model = model.fit(X_train, y_train)
 # Make predictions on the test set
 y_pred = model.predict(X_test)
 
-returns_4_tmrw = data['Returns_4_Tmrw'].iloc[split:split+len(y_pred)]
-# Ensure it matches the length
+# Get indices for the test set
+y_test_indices = X.index[split:]
 
-# Create DataFrame for Evaluation Metrics
+# Get the returns for the test set
+returns_test = data.loc[y_test_indices, 'Returns_4_Tmrw'].values
+
+# Create a DataFrame for evaluation metrics
 data1 = pd.DataFrame({
-    "Returns_4_Tmrw": returns_4_tmrw, 
+    "Returns_4_Tmrw": returns_test,
     "Actual_Class": y_test.tolist(),
-    "Predicted_Class": y_pred  # Corresponding returns
-})
+    "Predicted_Class": y_pred
+}, index=y_test_indices)  # Use the same indices for consistency
 
-data1 = data1.round(2)  # Round to 2 decimal places
+# Round to 5 decimal places
+data1 = data1.round(5)
+
 # Print the DataFrame
 print(tabulate(data1.head(10), headers='keys', tablefmt='pretty'))  # Displaying the first 10 rows
 
@@ -193,8 +196,8 @@ df['CORR'] = df['Close'].rolling(window=14).corr(df['SMA'])
 
 df = df.dropna()
 
-# Round all values to 2 decimal places
-df = df.round(2)
+# Round all values to 5 decimal places
+df = df.round(5)
 
 # Scale and Predict
 df_scaled = sc.transform(df[['VOLATILITY', 'CORR', 'RSI', 'MACD']])
