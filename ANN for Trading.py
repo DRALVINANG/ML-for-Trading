@@ -1,34 +1,35 @@
 import os
-#os.system("pip install numpy==1.23.0")
-#os.system("pip install pandas==1.3.5")
-
-# -------------------------------------------------------------------------------------
-# Step 1: Install Libraries
-# -------------------------------------------------------------------------------------
-
 import numpy as np
 import pandas as pd
-import seaborn as sns
-import matplotlib.pyplot as plt
-import pandas_ta as ta  # Use pandas_ta instead of TA-Lib
+import pandas_ta as ta
 import pyfolio as pf
 import yfinance as yf
+import matplotlib.pyplot as plt
+import seaborn as sns
 from sklearn.preprocessing import StandardScaler
 from keras.models import Sequential
 from keras.layers import Dense
-import pydot
 import tensorflow as tf
 from tensorflow import keras
+from tabulate import tabulate
+
+# -------------------------------------------------------------------------------------
+# Step 1: Install Libraries (for completeness, but you have them commented out)
+# -------------------------------------------------------------------------------------
+
+# os.system("pip install numpy==1.23.0")
+# os.system("pip install pandas==1.3.5")
 
 # -------------------------------------------------------------------------------------
 # Step 2: Import Dataset and Plot
 # -------------------------------------------------------------------------------------
 
 ticker = 'D05.SI'
-data = yf.download(ticker, start='2022-01-01', end = '2023-01-01')
+data = yf.download(ticker, start='2022-01-01', end='2023-01-01')
 data.columns = data.columns.droplevel(level=1)
 
-print(data)
+# Display the dataset using tabulate
+print(tabulate(data.head(), headers='keys', tablefmt='pretty'))
 
 # Plot Close Price
 data.Close.plot(figsize=(18, 5), color='b')
@@ -62,10 +63,23 @@ def get_target_features(data):
 
 y, X = get_target_features(data)
 
+# Display Features and Target using tabulate
+df_combined = pd.DataFrame({
+    "VOLATILITY": X['VOLATILITY'],
+    "RSI": X['RSI'],
+    "ADX": X['ADX'],
+    "CORR": X['CORR'],
+    "Returns_4_Tmrw": data['Returns_4_Tmrw'],  # Added Returns_4_Tmrw here
+    "Actual_Signal": y
+})
+df_combined = df_combined.dropna().round(5)  # Round to 5 decimal places
+print(tabulate(df_combined.head(10), headers='keys', tablefmt='pretty'))
+
 # -------------------------------------------------------------------------------------
 # Step 4: Train Test Split
 # -------------------------------------------------------------------------------------
 
+# Split Data
 split = int(0.8 * len(X))
 X_train, X_test, y_train, y_test = X[:split], X[split:], y[:split], y[split:]
 
@@ -92,7 +106,6 @@ model.summary()
 # Step 7: Plot the Model Architecture
 # -------------------------------------------------------------------------------------
 
-# Plot Model using Keras and Pydot
 keras.utils.plot_model(model, 'model.png', show_shapes=True)
 
 # Compile Model
@@ -101,7 +114,10 @@ model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['binary_acc
 # Train Model
 history = model.fit(X_train, y_train, batch_size=20, epochs=100, validation_data=(X_test, y_test))
 
-# Plot Training Metrics
+# -------------------------------------------------------------------------------------
+# Step 8: Plot Training Metrics
+# -------------------------------------------------------------------------------------
+
 bce = history.history['loss']
 val_bce = history.history['val_loss']
 epoch = range(len(bce))
@@ -122,21 +138,14 @@ plt.legend()
 plt.show()
 
 # -------------------------------------------------------------------------------------
-# Step 8: Confusion Matrix and Accuracy Metrics
+# Step 9: Confusion Matrix and Accuracy Metrics
 # -------------------------------------------------------------------------------------
 
 from sklearn import metrics
 
 def get_metrics(y_test, predicted):
     confusion_matrix_data = metrics.confusion_matrix(y_test, predicted)
-    fig, ax = plt.subplots(figsize=(6, 4))
-    sns.heatmap(confusion_matrix_data, fmt="d", cmap='Blues', cbar=False, annot=True, ax=ax)
-    ax.set_xlabel('Predicted Labels', fontsize=12)
-    ax.set_ylabel('Actual Labels', fontsize=12)
-    ax.set_title('Confusion Matrix', fontsize=14)
-    ax.xaxis.set_ticklabels(['No Position', 'Long Position'])
-    ax.yaxis.set_ticklabels(['No Position', 'Long Position'])
-    plt.show()
+    print(tabulate(confusion_matrix_data, headers=['Predicted No Position', 'Predicted Long Position'], tablefmt='pretty'))
     print('\n\n\n', metrics.classification_report(y_test, predicted))
 
 y_pred = model.predict(X_test)
@@ -144,14 +153,14 @@ y_pred = np.where(y_pred > 0.5, 1, 0)
 get_metrics(y_test, y_pred)
 
 # -------------------------------------------------------------------------------------
-# Step 9: Backtesting Our Model
+# Step 10: Backtesting Our Model
 # -------------------------------------------------------------------------------------
 
 df = yf.download(ticker, start='2023-01-01', end='2024-01-01')
 df.columns = df.columns.droplevel(level=1)
 
 df['PCT_CHANGE'] = df['Close'].pct_change()
-df['VOLATILITY'] = df.rolling(14)['PCT_CHANGE'].std() * 100
+df['VOLATILITY'] = df['PCT_CHANGE'].rolling(14).std() * 100
 df['RSI'] = ta.rsi(df['Close'], length=14)  # RSI using pandas_ta
 df['ADX'] = ta.adx(df['High'], df['Low'], df['Close'], length=14)['ADX_14']  # ADX using pandas_ta
 df['SMA'] = ta.sma(df['Close'], length=14)  # Simple Moving Average
@@ -163,8 +172,11 @@ df['predicted_signal_4_tmrw'] = model.predict(df_scaled)
 df['strategy_returns'] = df['predicted_signal_4_tmrw'].shift(1) * df['PCT_CHANGE']
 df.dropna(inplace=True)
 
+# Display the backtest data using tabulate
+print(tabulate(df.head(10), headers='keys', tablefmt='pretty'))
+
 # -------------------------------------------------------------------------------------
-# Step 10: Using Pyfolio
+# Step 11: Using Pyfolio
 # -------------------------------------------------------------------------------------
 
 perf_stats = pf.timeseries.perf_stats(df.strategy_returns)
@@ -178,5 +190,4 @@ plt.show()
 # -------------------------------------------------------------------------------------
 # THE END
 # -------------------------------------------------------------------------------------
-
 
