@@ -172,6 +172,9 @@ df['predicted_signal_4_tmrw'] = model.predict(df_scaled)
 df['strategy_returns'] = df['predicted_signal_4_tmrw'].shift(1) * df['PCT_CHANGE']
 df.dropna(inplace=True)
 
+# Round the data to 5 decimal places
+df = df.round(5)
+
 # Display the backtest data using tabulate
 print(tabulate(df.head(10), headers='keys', tablefmt='pretty'))
 
