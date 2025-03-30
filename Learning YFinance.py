@@ -1,15 +1,6 @@
-# -------------------------------------------------------------------------------------
-# Step 1: Install Libraries (for completeness, but you have them commented out)
-# -------------------------------------------------------------------------------------
-# !pip install yfinance
-# !pip install pandas
-# !pip install plotly
-# !pip install tabulate
-# -------------------------------------------------------------------------------------
-
 import yfinance as yf
 import pandas as pd
-import plotly.graph_objects as go
+import matplotlib.pyplot as plt
 from tabulate import tabulate
 
 # -------------------------------------------------------------------------------------
@@ -20,26 +11,21 @@ def get_stock_data(ticker):
     stock = yf.Ticker(ticker)
     return stock
 
-def plot_candlestick_chart(stock):
+def plot_close_price_chart(stock):
     # Get historical data for the stock
-    hist = stock.history(period="1y")  # Show 1 year of data by default
-    fig = go.Figure(data=[go.Candlestick(
-        x=hist.index,
-        open=hist['Open'],
-        high=hist['High'],
-        low=hist['Low'],
-        close=hist['Close'],
-        increasing_line_color='green', decreasing_line_color='red'
-    )])
-
-    fig.update_layout(
-        title='Candlestick Chart',
-        xaxis_title='Date',
-        yaxis_title='Price (USD)',
-        xaxis_rangeslider_visible=False
-    )
-
-    fig.show()
+    hist = stock.history(period="max")  # Show 1 year of data by default
+    
+    # Plot the close price
+    plt.figure(figsize=(10,6))
+    plt.plot(hist.index, hist['Close'], color='blue', label='Close Price')
+    plt.title('Stock Price Close Plot')
+    plt.xlabel('Date')
+    plt.ylabel('Close Price (USD)')
+    plt.grid(True)
+    plt.legend()
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.show()
 
 def display_stock_info(stock):
     info = stock.info
@@ -152,8 +138,8 @@ def main():
     if ticker:
         stock = get_stock_data(ticker)
 
-        # Display the candlestick chart
-        plot_candlestick_chart(stock)
+        # Display the close price chart
+        plot_close_price_chart(stock)
 
         # Display stock information
         display_stock_info(stock)
