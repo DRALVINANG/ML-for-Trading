@@ -11,7 +11,6 @@ import yfinance as yf
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.tree import DecisionTreeClassifier  # Decision Tree Classifier
-from sklearn import metrics
 from sklearn.preprocessing import StandardScaler
 from io import BytesIO
 from tabulate import tabulate
@@ -22,7 +21,7 @@ pd.set_option('display.max_columns', 20)
 # Step 2: Import Dataset & Plot
 #--------------------------------------------------------------------------------------
 
-ticker = 'D05.SI'
+ticker = 'EURUSD=X'
 data = yf.download(ticker, start='2022-01-01', end='2023-01-01')
 data.columns = data.columns.droplevel(level=1)
 
@@ -129,37 +128,11 @@ model = model.fit(X_train, y_train)
 y_pred = model.predict(X_test)
 
 #--------------------------------------------------------------------------------------
-# Step 8: Confusion Matrix and Accuracy Metric
-#--------------------------------------------------------------------------------------
-
-def get_metrics(y_test, predicted):
-    confusion_matrix_data = metrics.confusion_matrix(y_test, predicted)
-    
-    # Plot the confusion matrix
-    fig, ax = plt.subplots(figsize=(6, 4))
-    sns.heatmap(confusion_matrix_data, fmt="d", cmap='Blues', cbar=False, annot=True, ax=ax)
-
-    # Set axes labels and title
-    ax.set_xlabel('Predicted Labels', fontsize=12)
-    ax.set_ylabel('Actual Labels', fontsize=12)
-    ax.set_title('Confusion Matrix', fontsize=14)
-    ax.xaxis.set_ticklabels(['SELL', 'DON\'T BUY', 'BUY'])
-    ax.yaxis.set_ticklabels(['SELL', 'DON\'T BUY', 'BUY'])
-
-    # Display the plot
-    plt.show()
-
-    print('\n\n\n', metrics.classification_report(y_test, predicted))
-
-# Get confusion matrix and classification report
-get_metrics(y_test, y_pred)
-
-#--------------------------------------------------------------------------------------
 # Step 9: Backtesting Our Model
 #--------------------------------------------------------------------------------------
 
 # Get new data for backtesting
-ticker = 'D05.SI'
+ticker = 'EURUSD=X'
 df = yf.download(ticker, start='2023-01-01', end='2024-01-01')
 df.columns = df.columns.droplevel(level=1)
 
